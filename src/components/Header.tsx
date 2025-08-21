@@ -25,27 +25,27 @@ export default function Header({
   const [open, setOpen] = useState(false);
   const popRef = useRef<HTMLDivElement>(null);
 
-  // close popover on outside click / Esc
+  // Optimize event listeners with a single handler
   useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      if (open && popRef.current && !popRef.current.contains(e.target as Node))
+    const handleOutsideClick = (e: MouseEvent | KeyboardEvent) => {
+      if (open && popRef.current && !popRef.current.contains(e.target as Node)) {
         setOpen(false);
+      } else if (e instanceof KeyboardEvent && e.key === 'Escape') {
+        setOpen(false);
+      }
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleOutsideClick);
     return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleOutsideClick);
     };
   }, [open]);
 
-  // disable rules
+  // Compute disabled states efficiently
   const disAll = counts.all === 0;
-  const disClearDone = counts.completed === 0;
-  const disMarkAll = counts.active === 0;
+  const disClearDone = disAll || counts.completed === 0;
+  const disMarkAll = disAll || counts.active === 0;
 
   return (
     <header id="listHeader">
@@ -93,7 +93,7 @@ export default function Header({
 
               <button
                 role="menuitem"
-                disabled={disAll || disClearDone}
+                disabled={disClearDone}
                 onClick={() => {
                   onClearCompleted();
                   setOpen(false);
@@ -106,7 +106,7 @@ export default function Header({
 
               <button
                 role="menuitem"
-                disabled={disAll || disMarkAll}
+                disabled={disMarkAll}
                 onClick={() => {
                   onMarkAllDone();
                   setOpen(false);

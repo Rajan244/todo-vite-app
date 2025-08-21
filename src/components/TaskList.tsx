@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { Task, Filter } from '../types';
 import TaskItem from './TaskItem';
 
@@ -17,16 +17,15 @@ export default function TaskList({
   onDelete,
   onEdit,
 }: Props) {
-  const visible =
-    filter === 'active'
-      ? tasks.filter((t) => !t.completed)
-      : filter === 'completed'
-      ? tasks.filter((t) => t.completed)
-      : tasks;
+  const visible = useMemo(() => {
+    if (filter === 'active') return tasks.filter((t) => !t.completed);
+    if (filter === 'completed') return tasks.filter((t) => t.completed);
+    return tasks;
+  }, [tasks, filter]);
 
   return (
     <section id="tasks" data-empty={visible.length === 0}>
-      <div id="notification">No tasks in this view.</div>
+      {visible.length === 0 && <div id="notification">No tasks in this view.</div>}
       <ul id="tasksList">
         {visible.map((t) => (
           <TaskItem

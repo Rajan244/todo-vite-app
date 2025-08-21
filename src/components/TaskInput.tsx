@@ -8,11 +8,13 @@ export default function TaskInput({ onAdd }: Props) {
   const ref = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
-    const v = ref.current?.value ?? '';
-    if (!v.trim()) return;
-    onAdd(v);
-    if (ref.current) ref.current.value = '';
-    ref.current?.focus();
+    const input = ref.current;
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) return;
+    onAdd(value);
+    input.value = ''; // Direct mutation after use
+    input.focus();
   };
 
   return (
@@ -22,12 +24,7 @@ export default function TaskInput({ onAdd }: Props) {
         ref={ref}
         type="text"
         placeholder="Your task"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAdd();
-          }
-        }}
+        onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
       />
       <button id="taskAdd" onClick={handleAdd} aria-label="Add task">
         +

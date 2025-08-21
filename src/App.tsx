@@ -8,9 +8,9 @@ import { load, save } from './utils/storage';
 
 export default function App() {
   // hydrate from localStorage once
-  const snap = load();
-  const [title, setTitle] = useState<string>(snap?.title ?? 'My Tasks');
-  const [tasks, dispatch] = useReducer(tasksReducer, snap?.tasks ?? []);
+  const initialSnap = load();
+  const [title, setTitle] = useState<string>(initialSnap?.title ?? 'My Tasks');
+  const [tasks, dispatch] = useReducer(tasksReducer, initialSnap?.tasks ?? []);
 
   // persistence (debounced lightly)
   useEffect(() => {
@@ -20,26 +20,24 @@ export default function App() {
 
   // counts + filters
   const [filter, setFilter] = useState<Filter>('all');
-  const counts = useMemo(
-    () => ({
-      all: tasks.length,
-      active: tasks.reduce((n, t) => n + (t.completed ? 0 : 1), 0),
-      completed: tasks.reduce((n, t) => n + (t.completed ? 1 : 0), 0),
-    }),
-    [tasks]
-  );
+  const counts = useMemo(() => {
+      let active = 0, completed = 0;
+      for (const t of tasks) {
+        if (t.completed) completed++;
+        else active++;
+      }
+      return { all: tasks.length, active, completed };
+    }, [tasks]);
 
-  // handlers
-  const add = (text: string) => dispatch({ type: 'ADD', text });
-  const toggle = (id: string) => dispatch({ type: 'TOGGLE', id });
-  const del = (id: string) => dispatch({ type: 'DELETE', id });
-  const edit = (id: string, text: string) =>
-    dispatch({ type: 'EDIT', id, text });
-
-  // bulk actions
-  const clearAll = () => dispatch({ type: 'CLEAR_ALL' });
-  const clearCompleted = () => dispatch({ type: 'CLEAR_COMPLETED' });
-  const markAllDone = () => dispatch({ type: 'MARK_ALL_DONE' });
+  const handlers = useMemo(() => ({
+    add: (text: string) => dispatch({ type: 'ADD', text }),
+    edit: (id: string, text: string) => dispatch({ type: 'EDIT', id, text }),
+    toggle: (id: string) => dispatch({ type: 'TOGGLE', id }),
+    del: (id: string) => dispatch({ type: 'DELETE', id }),
+    clearAll: () => dispatch({ type: 'CLEAR_ALL' }),
+    clearCompleted: () => dispatch({ type: 'CLEAR_COMPLETED' }),
+    markAllDone: () => dispatch({ type: 'MARK_ALL_DONE' }),
+  }), [dispatch]);
 
   return (
     <div id="app">
@@ -54,20 +52,20 @@ export default function App() {
           filter={filter}
           onFilter={setFilter}
           counts={counts}
-          onClearAll={clearAll}
-          onClearCompleted={clearCompleted}
-          onMarkAllDone={markAllDone}
+          onClearAll={handlers.clearAll}
+          onClearCompleted={handlers.clearCompleted}
+          onMarkAllDone={handlers.markAllDone}
         />
 
         <TaskList
           tasks={tasks}
           filter={filter}
-          onToggle={toggle}
-          onDelete={del}
-          onEdit={edit}
+          onToggle={handlers.toggle}
+          onDelete={handlers.del}
+          onEdit={handlers.edit}
         />
 
-        <TaskInput onAdd={add} />
+        <TaskInput onAdd={handlers.add} />
       </main>
     </div>
   );

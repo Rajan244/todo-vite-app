@@ -12,15 +12,29 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(task.text);
 
-  const save = () => {
-    if (!editing) return;
-    onEdit(task.id, text);
+  const handleSave = () => {
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+      setEditing(false);
+      setText(task.text);
+      return;
+    }
+    onEdit(task.id, trimmedText);
     setEditing(false);
+    setText(trimmedText); // Sync with saved value
   };
 
-  const cancel = () => {
+  const handleCancel = () => {
     setEditing(false);
     setText(task.text);
+  };
+
+  const handleAction = () => {
+    if (editing) {
+      handleSave();
+    } else {
+      setEditing(true);
+    }
   };
 
   return (
@@ -30,9 +44,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
         type="checkbox"
         checked={task.completed}
         onChange={() => onToggle(task.id)}
-        aria-label={`Mark "${task.text}" as ${
-          task.completed ? 'active' : 'completed'
-        }`}
+        aria-label={`Mark "${task.text}" as ${task.completed ? 'active' : 'completed'}`}
       />
 
       {/* content */}
@@ -47,10 +59,10 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
             value={text}
             autoFocus
             onChange={(e) => setText(e.target.value)}
-            onBlur={save}
+            onBlur={handleSave}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') return save();
-              if (e.key === 'Escape') return cancel();
+              if (e.key === 'Enter') handleSave();
+              else if (e.key === 'Escape') handleCancel();
             }}
           />
         )}
@@ -63,7 +75,7 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
           aria-label={editing ? 'Save task' : 'Edit task'}
           onClick={(e) => {
             e.stopPropagation();
-            editing ? save() : setEditing(true);
+            handleAction();
           }}
           title={editing ? 'Save' : 'Edit'}
         >

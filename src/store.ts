@@ -5,33 +5,46 @@ type Action =
   | { type: "TOGGLE" | "DELETE" | "EDIT"; id: string; text?: string }
   | { type: "CLEAR_COMPLETED" | "CLEAR_ALL" | "MARK_ALL_DONE" };
 
+const getIdx = (state: Task[], id: string) => state.findIndex(t => t.id === id);
+
 const actionHandlers: Record<Action['type'], (state: Task[], action: Action) => Task[]> = {
   ADD: (state, action) => {
-    const text = (action as { text: string }).text.trim();
+    const text = action.text.trim();
     if (!text) return state;
     return [{ id: crypto.randomUUID(), text, completed: false, createdAt: Date.now() }, ...state];
   },
-  TOGGLE: (state, action) => {
-    const index = state.findIndex(t => t.id === action.id);
-    if (index === -1) return state;
-    const newState = [...state];
-    newState[index] = { ...newState[index], completed: !newState[index].completed };
-    return newState;
-  },
-  DELETE: (state, action) => state.filter(t => t.id !== action.id),
+
   EDIT: (state, action) => {
-    const text = (action.text?.trim() || "");
+    const text = action.text?.trim() || "";
     if (!text) return state;
-    const index = state.findIndex(t => t.id === action.id);
+    const index = getIdx(state, action.id);
     if (index === -1) return state;
-    const newState = [...state];
-    newState[index] = { ...newState[index], text };
-    return newState;
+    return [ ...state.slice(0, index),  { ...state[index], text },   ...state.slice(index + 1) ];
   },
-  CLEAR_COMPLETED: state => state.filter(t => !t.completed),
+
+  TOGGLE: (state, action) => {
+    const index = getIdx(state, action.id);
+    if (index === -1) return state;
+    return [ ...state.slice(0, index),   { ...state[index], completed: !state[index].completed },   ...state.slice(index + 1) ];
+  },
+
+  DELETE: (state, action) => {
+    const index = getIdx(state, action.id);
+    if (index === -1) return state;
+    return [...state.slice(0, index), ...state.slice(index + 1)];
+  },
+
+  CLEAR_COMPLETED: (state) => {
+    const hasCompleted = state.some(t => t.completed);
+    return hasCompleted ? state.filter(t => !t.completed) : state;
+  },
+
   CLEAR_ALL: () => [],
-  MARK_ALL_DONE: state => state.every(t => t.completed) ? state : state.map(t => ({ ...t, completed: true })),
+
+  MARK_ALL_DONE: (state) => {
+    const allCompleted = state.every(t => t.completed);
+    return allCompleted ? [...state] : state.map(t => ({ ...t, completed: true }));
+  },
 };
 
-export const tasksReducer = (state: Task[], action: Action): Task[] =>
-  actionHandlers[action.type]?.(state, action) ?? state;
+export const tasksReducer = (state: Task[], action: Action): Task[] => actionHandlers[action.type]?.(state, action) ?? state;
