@@ -1,41 +1,37 @@
 import type { Task } from "./types";
 
-export type Action =
+type Action = 
   | { type: "ADD"; text: string }
-  | { type: "TOGGLE"; id: string }
-  | { type: "DELETE"; id: string }
-  | { type: "EDIT"; id: string; text: string }
-  | { type: "CLEAR_COMPLETED" }
-  | { type: "CLEAR_ALL" }
-  | { type: "MARK_ALL_DONE" };
+  | { type: "TOGGLE" | "DELETE" | "EDIT"; id: string; text?: string }
+  | { type: "CLEAR_COMPLETED" | "CLEAR_ALL" | "MARK_ALL_DONE" };
 
-export function tasksReducer(state: Task[], action: Action): Task[] {
-  switch (action.type) {
-    case "ADD": {
-      const text = action.text.trim();
-      if (!text) return state;
-      const t: Task = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        text,
-        completed: false,
-        createdAt: Date.now(),
-      };
-      // newest first
-      return [t, ...state];
-    }
-    case "TOGGLE":
-      return state.map((t) => (t.id === action.id ? { ...t, completed: !t.completed } : t));
-    case "DELETE":
-      return state.filter((t) => t.id !== action.id);
-    case "EDIT":
-      return state.map((t) => (t.id === action.id ? { ...t, text: action.text.trim() || t.text } : t));
-    case "CLEAR_COMPLETED":
-      return state.filter((t) => !t.completed);
-    case "CLEAR_ALL":
-      return [];
-    case "MARK_ALL_DONE":
-      return state.map((t) => ({ ...t, completed: true }));
-    default:
-      return state;
-  }
-}
+const actionHandlers: Record<Action['type'], (state: Task[], action: Action) => Task[]> = {
+  ADD: (state, action) => {
+    const text = (action as { text: string }).text.trim();
+    if (!text) return state;
+    return [{ id: crypto.randomUUID(), text, completed: false, createdAt: Date.now() }, ...state];
+  },
+  TOGGLE: (state, action) => {
+    const index = state.findIndex(t => t.id === action.id);
+    if (index === -1) return state;
+    const newState = [...state];
+    newState[index] = { ...newState[index], completed: !newState[index].completed };
+    return newState;
+  },
+  DELETE: (state, action) => state.filter(t => t.id !== action.id),
+  EDIT: (state, action) => {
+    const text = (action.text?.trim() || "");
+    if (!text) return state;
+    const index = state.findIndex(t => t.id === action.id);
+    if (index === -1) return state;
+    const newState = [...state];
+    newState[index] = { ...newState[index], text };
+    return newState;
+  },
+  CLEAR_COMPLETED: state => state.filter(t => !t.completed),
+  CLEAR_ALL: () => [],
+  MARK_ALL_DONE: state => state.every(t => t.completed) ? state : state.map(t => ({ ...t, completed: true })),
+};
+
+export const tasksReducer = (state: Task[], action: Action): Task[] =>
+  actionHandlers[action.type]?.(state, action) ?? state;

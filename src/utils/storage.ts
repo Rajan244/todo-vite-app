@@ -7,7 +7,6 @@ export type Snapshot = {
   tasks: Task[];
 };
 
-// load snapshot (null if none)
 export function load(): Snapshot | null {
   try {
     const raw = localStorage.getItem(KEY);
@@ -17,7 +16,6 @@ export function load(): Snapshot | null {
   }
 }
 
-// save snapshot (safe)
 export function save(snap: Snapshot) {
   try {
     localStorage.setItem(KEY, JSON.stringify(snap));
