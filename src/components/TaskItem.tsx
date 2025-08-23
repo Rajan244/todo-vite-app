@@ -1,45 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Task } from '../types';
 
-type Props = {
+interface Props {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string, text: string) => void;
-};
+}
 
 export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
-  const [editing, setEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(task.text);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const originalText = useRef(task.text);
+
+  useEffect(() => {
+    setText(task.text);
+    originalText.current = task.text;
+  }, [task.text]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
 
   const handleSave = () => {
     const trimmedText = text.trim();
     if (!trimmedText) {
-      setEditing(false);
-      setText(task.text);
+      setIsEditing(false);
+      setText(originalText.current);
       return;
     }
-    onEdit(task.id, trimmedText);
-    setEditing(false);
-    setText(trimmedText); // Sync with saved value
+    if (trimmedText !== originalText.current) {
+      onEdit(task.id, trimmedText);
+    }
+    setIsEditing(false);
   };
 
   const handleCancel = () => {
-    setEditing(false);
-    setText(task.text);
+    setIsEditing(false);
+    setText(originalText.current);
   };
 
-  const handleAction = () => {
-    if (editing) {
+   const handleAction = () => {
+    isEditing ? handleSave() : (originalText.current = task.text, setIsEditing(true));
+  };
+
+  const handleBlur = () => {
+    setTimeout(() => isEditing && handleSave(), 150);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
       handleSave();
-    } else {
-      setEditing(true);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
     }
   };
 
   return (
     <li className={task.completed ? 'is-completed' : ''}>
-      {/* checkbox */}
+      {/* Checkbox for task completion */}
       <input
         type="checkbox"
         checked={task.completed}
@@ -47,47 +72,45 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
         aria-label={`Mark "${task.text}" as ${task.completed ? 'active' : 'completed'}`}
       />
 
-      {/* content */}
+      {/* Task content */}
       <div className="content">
-        {!editing ? (
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            className="edit-title"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            aria-label="Edit task title"
+          />
+        ) : (
           <span className={`task-title ${task.completed ? 'completed' : ''}`}>
             {task.text}
           </span>
-        ) : (
-          <input
-            className="edit-title"
-            value={text}
-            autoFocus
-            onChange={(e) => setText(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave();
-              else if (e.key === 'Escape') handleCancel();
-            }}
-          />
         )}
       </div>
 
-      {/* actions */}
+      {/* Task actions */}
       <div className="actions">
         <button
           className="icon"
-          aria-label={editing ? 'Save task' : 'Edit task'}
           onClick={(e) => {
             e.stopPropagation();
             handleAction();
           }}
-          title={editing ? 'Save' : 'Edit'}
+          aria-label={isEditing ? 'Save task' : 'Edit task'}
+          title={isEditing ? 'Save' : 'Edit'}
         >
-          {editing ? '✓' : '✎'}
+          {isEditing ? '✓' : '✎'}
         </button>
         <button
           className="icon"
-          aria-label="Delete task"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(task.id);
           }}
+          aria-label="Delete task"
           title="Delete"
         >
           🗑
