@@ -25,7 +25,7 @@ export default function TaskList({
 
   return (
     <section id="tasks" data-empty={visible.length === 0}>
-      {visible.length === 0 && <div id="notification">No tasks in this view.</div>}
+      {visible.length === 0 && <div id="notification">No tasks yet.</div>}
       <ul id="tasksList">
         {visible.map((t) => (
           <TaskItem

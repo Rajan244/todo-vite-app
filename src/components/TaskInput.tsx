@@ -23,7 +23,7 @@ export default function TaskInput({ onAdd }: Props) {
         id="taskInput"
         ref={ref}
         type="text"
-        placeholder="Your task"
+        placeholder="Add a task…"
         onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
       />
       <button id="taskAdd" onClick={handleAdd} aria-label="Add task">

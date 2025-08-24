@@ -1,20 +1,10 @@
 # Barebones React To-Do App
 
-A minimal client-side To-Do app demonstrating React fundamentals, built as per the provided specification.
-
-## Project Overview
-
-This app implements the required features for task creation, listing, completion toggling, and deletion, with basic styling and accessibility. It also includes some optional enhancements for better UX without overcomplicating the core.
-
 ## How to Run Locally
 
-1. Clone the repository: `git clone <repo-url>`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-   - The app will open in your browser at `http://localhost:5173`
-4. (Optional) Build for production: `npm run build`
-5. (Optional) Preview the build: `npm run preview` (serves at `http://localhost:4173`)
-6. (Optional) Run reducer tests: `npm test`
+- To run in development mode: `npm install` then `npm run dev` (opens at http://localhost:5173).
+- To test the reducer: `npm test`.
+- To run in production mode: `npm run build` then `npm run preview` (serves at http://localhost:4173).
 
 ## Tooling Choice
 
@@ -24,44 +14,51 @@ This app implements the required features for task creation, listing, completion
 
 ## Features
 
-### Core Operations (Must-Have)
+### Core Operations
 - **Create Task**: Enter text in the input field and press "Enter" or click the "+" button to add. Input is trimmed; empty or whitespace-only inputs are ignored.
-- **List Tasks**: Tasks are displayed in a list, with newest tasks at the top (sorted by `createdAt` timestamp).
+- **List Tasks**: Tasks displayed in a list, newest first (sorted by `createdAt` timestamp).
 - **Toggle Completion**: Checkbox per task to mark complete/incomplete. Completed tasks show strike-through text.
-- **Delete Task**: Delete button (🗑 icon) per task to remove it immediately.
-- **Empty State**: Displays "No tasks in this view." when no tasks are present (or filtered to none).
+- **Delete Task**: Delete button (🗑 icon) per task removes it immediately.
+- **Empty State**: Shows "No tasks yet." when no tasks are present.
 
-### Optional Enhancements
-- **Task Editing**: Inline edit mode for task text (✎ to enter, ✓ to save, Escape to cancel).
-- **Filters**: View "All", "Active", or "Done" tasks with counts (e.g., All 5).
-- **Bulk Actions**: Via more menu (⋮): Clear All, Clear All Done, Mark All Done (disabled when inapplicable).
-- **Persistence**: Tasks and list title saved to localStorage (debounced save); loads on init. Data clears on explicit actions but persists across refreshes for UX.
-- **Editable List Title**: Customize the header title (defaults to "My Tasks").
-- **Task Counts**: Real-time counts for all/active/completed in filters.
+### Additional Enhancements
+- **Task Editing**: Inline edit mode (✎ to enter, ✓ to save, Escape to cancel) to update task text.
+- **Filters**: View "All", "Active", or "Done" tasks with counts (e.g., All 5) for better task management.
+- **Bulk Actions**: More menu (⋮) with Clear All, Clear All Done, Mark All Done (disabled when inapplicable) to handle multiple tasks.
+- **Persistence**: Tasks and list title saved to localStorage (debounced) and loaded on init for a smoother experience across refreshes.
+- **Editable List Title**: Customizable header title (defaults to "My Tasks") to personalize the app.
+- **Task Counts**: Real-time counts for all/active/completed in filters to track progress.
 
 ### Styling and UX
-- **Layout**: Clean, responsive design using CSS Flexbox/Grid. Width clamped for mobile/desktop (min 420px, max 900px). Light color scheme with variables for easy theming (primary blue accents).
-- **Visuals**: Completed tasks have strike-through and class for styling (no opacity reduction to keep readability). Hover effects on buttons/icons. Rounded borders and subtle shadows for polish.
-- **Accessibility**: Aria-labels on interactive elements (e.g., "Mark [task] as completed", "Delete task"). Keyboard navigation: Tab order (input > checkboxes > deletes), Enter to add/save, Space to toggle/activate. Semantic HTML (e.g., role="tablist" for filters).
-- **Performance**: Memoized computations for filters/counts/handlers to avoid unnecessary re-renders. Efficient for small lists.
+- **Layout**: Responsive with CSS Flexbox/Grid. Width clamped (min 420px, max 900px) for mobile/desktop. Light theme with blue accents.
+- **Visuals**: Completed tasks have strike-through; hover effects on buttons/icons; rounded borders for polish.
+- **Accessibility**: Aria-labels (e.g., "Mark [task] as completed", "Delete task"); keyboard nav (Tab order: input > checkboxes > deletes; Enter adds/saves; Space toggles/activates); semantic HTML.
+- **Performance**: Memoized filters/counts/handlers to minimize re-renders; efficient for small lists.
 
 ### Data Model
 - In-memory array of `Task` objects: `{ id: string (crypto.randomUUID()), text: string (trimmed), completed: boolean, createdAt: number (Date.now()) }`.
 
 ## Decisions/Notes
-- Chose Vite over CRA for faster setup and builds; TypeScript for robust typing on props/state.
-- Used useReducer for centralized, testable state management (pure functions, immutable updates); included smoke tests for reducer logic.
-- Added persistence and optionals (editing, filters, bulks) as bonuses to demonstrate extensibility, while keeping core minimal.
-- Focused on a11y with real buttons, labels via aria, and keyboard support per spec.
-- No external UI libs; pure CSS for styling to minimize dependencies.
+- Chose Vite over CRA for faster setup and builds; TypeScript for robust prop/state typing.
+- Used useReducer for centralized state management with pure updates; added reducer tests for reliability.
+- Included editing, filters, bulk actions, persistence, and editable title to explore extensibility and enhance usability, aligning with spec’s allowance for additional features.
+- Prioritized accessibility with buttons, aria-labels, and keyboard support.
+- Used pure CSS (no UI libs) for minimal dependencies.
+
+## Potential Future Improvements
+- **Task Descriptions**: Add a description field to tasks for extra context, editable inline.
+- **Unit Tests**: Expand test coverage with Jest for components alongside reducer tests.
+- **Customizable Themes**: Add user-selectable color themes (e.g., blue, green) with dark mode toggle using CSS variables.
+- **Micro-Animations**: Add CSS transitions for task add/delete (e.g., fade-in/out) for smoother UX.
+- **Error Feedback**: Show user-facing alerts for edge cases (e.g., storage quota exceeded).
 
 ## Browser Support
-- Tested on latest Chrome, Edge, Firefox, Safari (as per browserslist in package.json: last 2 versions, not dead).
+- Tested on latest Chrome, Edge, Firefox, Safari (per browserslist: last 2 versions, not dead).
 
 ## Version Information
-- Node.js: >=18 (as per engines in package.json).
+- Node.js: >=18 (per package.json engines).
 - React: 18.3.1
 - React DOM: 18.3.1
 - Vite: 5.4.0
 - TypeScript: 5.5.4
-- Full dependencies listed in `package.json`.
+- Full dependencies in `package.json`.
