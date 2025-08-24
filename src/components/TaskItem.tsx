@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Task } from '../types';
 
 interface Props {
@@ -9,70 +9,65 @@ interface Props {
 }
 
 export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
+  const { id, text: taskText, completed } = task;
+
   const [isEditing, setIsEditing] = useState(false);
-  const [text, setText] = useState(task.text);
+  const [text, setText] = useState(taskText);
   const inputRef = useRef<HTMLInputElement>(null);
-  const originalText = useRef(task.text);
+  const baseline = useRef(taskText);
+  const clickingAction = useRef(false);
 
+  // sync when upstream task text changes
   useEffect(() => {
-    setText(task.text);
-    originalText.current = task.text;
-  }, [task.text]);
+    setText(taskText);
+    baseline.current = taskText;
+  }, [taskText]);
 
+  // autofocus on enter edit
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
     }
   }, [isEditing]);
 
-  const handleSave = () => {
-    const trimmedText = text.trim();
-    if (!trimmedText) {
+  const save = () => {
+    const v = text.trim();
+    if (!v) {
+      setText(baseline.current);
       setIsEditing(false);
-      setText(originalText.current);
       return;
     }
-    if (trimmedText !== originalText.current) {
-      onEdit(task.id, trimmedText);
+    if (v !== baseline.current) {
+      onEdit(id, v);
+      baseline.current = v;
     }
     setIsEditing(false);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setText(originalText.current);
+  const startEdit = () => {
+    baseline.current = taskText; // ensure freshest source
+    setIsEditing(true);
   };
 
-   const handleAction = () => {
-    isEditing ? handleSave() : (originalText.current = task.text, setIsEditing(true));
+  const onBlur = () => {
+    if (!clickingAction.current && isEditing) save();
   };
 
-  const handleBlur = () => {
-    setTimeout(() => isEditing && handleSave(), 150);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleCancel();
-    }
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+    else if (e.key === 'Escape') { e.preventDefault(); setText(baseline.current); setIsEditing(false); }
   };
 
   return (
-    <li className={task.completed ? 'is-completed' : ''}>
-      {/* Checkbox for task completion */}
+    <li className={completed ? 'is-completed' : ''}>
       <input
         type="checkbox"
-        checked={task.completed}
-        onChange={() => onToggle(task.id)}
-        aria-label={`Mark "${task.text}" as ${task.completed ? 'active' : 'completed'}`}
+        checked={completed}
+        onChange={() => onToggle(id)}
+        aria-label={`Mark "${taskText}" as ${completed ? 'active' : 'completed'}`}
       />
 
-      {/* Task content */}
       <div className="content">
         {isEditing ? (
           <input
@@ -80,36 +75,32 @@ export default function TaskItem({ task, onToggle, onDelete, onEdit }: Props) {
             className="edit-title"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
+            onBlur={onBlur}
+            onKeyDown={onKeyDown}
             aria-label="Edit task title"
           />
         ) : (
-          <span className={`task-title ${task.completed ? 'completed' : ''}`}>
-            {task.text}
-          </span>
+          <span className={`task-title ${completed ? 'completed' : ''}`}>{taskText}</span>
         )}
       </div>
 
-      {/* Task actions */}
       <div className="actions">
         <button
           className="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAction();
-          }}
+          onMouseDown={() => (clickingAction.current = true)}
+          onMouseUp={() => (clickingAction.current = false)}
+          onTouchStart={() => (clickingAction.current = true)}
+          onTouchEnd={() => (clickingAction.current = false)}
+          onClick={(e) => { e.stopPropagation(); clickingAction.current = false; isEditing ? save() : startEdit(); }}
           aria-label={isEditing ? 'Save task' : 'Edit task'}
           title={isEditing ? 'Save' : 'Edit'}
         >
           {isEditing ? '✓' : '✎'}
         </button>
+
         <button
           className="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(task.id);
-          }}
+          onClick={(e) => { e.stopPropagation(); onDelete(id); }}
           aria-label="Delete task"
           title="Delete"
         >
